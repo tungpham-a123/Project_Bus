@@ -11,7 +11,7 @@ import java.sql.SQLException;
 
 public class DBContext {
     private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=SchoolBusDB;encrypt=false";
-    private static final String USER = "tung";
+    private static final String USER = "sa";
     private static final String PASSWORD = "123"; 
 
     public static Connection getConnection() {
