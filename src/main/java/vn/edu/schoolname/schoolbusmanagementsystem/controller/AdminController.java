@@ -50,5 +50,201 @@ public class AdminController {
         return "admin/dashboard"; 
     }
 
-   //dit me tung
+       @GetMapping("/users")
+    public String listUsers(Model model) {
+        List<User> userList = userDAO.getAllUsers();
+        model.addAttribute("users", userList);
+        return "admin/user-list"; 
+    }
+
+    @GetMapping("/users/add")
+    public String showAddUserForm(Model model) {
+        List<Role> roles = roleDAO.getAllRoles();
+        model.addAttribute("roles", roles);
+        return "admin/add-user"; 
+    }
+
+    @PostMapping("/users/add")
+    public String addUser(@RequestParam("username") String username,
+            @RequestParam("password") String password,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("phone") String phone,
+            @RequestParam("email") String email,
+            @RequestParam("roleId") int roleId) {
+
+        User newUser = new User();
+        newUser.setUsername(username);
+        newUser.setPassword(password); 
+        newUser.setFullName(fullName);
+        newUser.setPhone(phone);
+        newUser.setEmail(email);
+
+        Role role = new Role();
+        role.setId(roleId);
+        newUser.setRole(role);
+
+        userDAO.addUser(newUser);
+
+        return "redirect:/admin/users";
+    }
+
+        @GetMapping("/users/edit/{id}")
+    public String showEditUserForm(@PathVariable("id") int id, Model model) {
+        User user = userDAO.getUserById(id);
+        List<Role> roles = roleDAO.getAllRoles();
+
+        model.addAttribute("user", user);
+        model.addAttribute("roles", roles);
+
+        return "admin/edit-user"; 
+    }
+
+    @PostMapping("/users/edit")
+    public String updateUser(@RequestParam int id,
+            @RequestParam String fullName,
+            @RequestParam String phone,
+            @RequestParam String email,
+            @RequestParam int roleId) {
+
+        User user = new User();
+        user.setId(id);
+        user.setFullName(fullName);
+        user.setPhone(phone);
+        user.setEmail(email);
+
+        Role role = new Role();
+        role.setId(roleId);
+        user.setRole(role);
+
+        userDAO.updateUser(user);
+
+        return "redirect:/admin/users";
+    }
+
+    @GetMapping("/users/delete/{id}")
+    public String deleteUser(@PathVariable("id") int id) {
+        userDAO.deleteUser(id);
+        return "redirect:/admin/users";
+    }
+    private final TripDAO tripDAO = new TripDAO();
+
+    @GetMapping("/trips")
+    public String listTrips(Model model) {
+        List<Trip> tripList = tripDAO.getAllTrips();
+        model.addAttribute("trips", tripList);
+        return "admin/trip-list";
+    }
+
+    @GetMapping("/trips/add")
+    public String showAddTripForm(Model model) {
+        List<Route> routes = routeDAO.getAllRoutes();
+        List<Bus> buses = busDAO.getAllBuses();
+        List<User> drivers = userDAO.getUsersByRole("driver");
+        List<User> monitors = userDAO.getUsersByRole("monitor");
+
+        model.addAttribute("routes", routes);
+        model.addAttribute("buses", buses);
+        model.addAttribute("drivers", drivers);
+        model.addAttribute("monitors", monitors);
+
+        return "admin/add-trip";
+    }
+
+    @PostMapping("/trips/add")
+    public String addTrip(@RequestParam("tripDate") String tripDateStr,
+            @RequestParam("tripType") String tripType,
+            @RequestParam("routeId") int routeId,
+            @RequestParam("busId") int busId,
+            @RequestParam("driverId") int driverId,
+            @RequestParam("monitorId") int monitorId) throws ParseException {
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        Date tripDate = formatter.parse(tripDateStr);
+
+        Trip newTrip = new Trip();
+        newTrip.setTripDate(tripDate);
+        newTrip.setTripType(tripType);
+
+        Route route = new Route();
+        route.setId(routeId);
+        newTrip.setRoute(route);
+
+        Bus bus = new Bus();
+        bus.setId(busId);
+        newTrip.setBus(bus);
+
+        User driver = new User();
+        driver.setId(driverId);
+        newTrip.setDriver(driver);
+
+        User monitor = new User();
+        monitor.setId(monitorId);
+        newTrip.setMonitor(monitor);
+
+        tripDAO.addTrip(newTrip);
+
+        return "redirect:/admin/trips";
+    }
+
+    @GetMapping("/trips/edit/{id}")
+    public String showEditTripForm(@PathVariable("id") int id, Model model) {
+        Trip trip = tripDAO.getTripById(id);
+
+        List<Route> routes = routeDAO.getAllRoutes();
+        List<Bus> buses = busDAO.getAllBuses();
+        List<User> drivers = userDAO.getUsersByRole("driver");
+        List<User> monitors = userDAO.getUsersByRole("monitor");
+
+        model.addAttribute("trip", trip);
+        model.addAttribute("routes", routes);
+        model.addAttribute("buses", buses);
+        model.addAttribute("drivers", drivers);
+        model.addAttribute("monitors", monitors);
+
+        return "admin/edit-trip";
+    }
+
+    @PostMapping("/trips/edit")
+    public String updateTrip(@RequestParam("id") int id,
+            @RequestParam("tripDate") String tripDateStr,
+            @RequestParam("tripType") String tripType,
+            @RequestParam("routeId") int routeId,
+            @RequestParam("busId") int busId,
+            @RequestParam("driverId") int driverId,
+            @RequestParam("monitorId") int monitorId) throws ParseException {
+
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+        Date tripDate = formatter.parse(tripDateStr);
+
+        Trip tripToUpdate = new Trip();
+        tripToUpdate.setId(id);
+        tripToUpdate.setTripDate(tripDate);
+        tripToUpdate.setTripType(tripType);
+
+        Route route = new Route();
+        route.setId(routeId);
+        tripToUpdate.setRoute(route);
+
+        Bus bus = new Bus();
+        bus.setId(busId);
+        tripToUpdate.setBus(bus);
+
+        User driver = new User();
+        driver.setId(driverId);
+        tripToUpdate.setDriver(driver);
+
+        User monitor = new User();
+        monitor.setId(monitorId);
+        tripToUpdate.setMonitor(monitor);
+
+        tripDAO.updateTrip(tripToUpdate);
+
+        return "redirect:/admin/trips";
+    }
+
+    @GetMapping("/trips/delete/{id}")
+    public String deleteTrip(@PathVariable("id") int id) {
+        tripDAO.deleteTrip(id);
+        return "redirect:/admin/trips";
+    }
 }
