@@ -4,38 +4,25 @@
  */
 package vn.edu.schoolname.schoolbusmanagementsystem.controller;
 
-import java.sql.Time;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
+
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+
 import vn.edu.schoolname.schoolbusmanagementsystem.dao.BusDAO;
 import vn.edu.schoolname.schoolbusmanagementsystem.dao.BusIssueDAO;
 import vn.edu.schoolname.schoolbusmanagementsystem.dao.RoleDAO;
 import vn.edu.schoolname.schoolbusmanagementsystem.dao.RouteDAO;
 import vn.edu.schoolname.schoolbusmanagementsystem.dao.StopDAO;
-import vn.edu.schoolname.schoolbusmanagementsystem.dao.StudentDAO;
-import vn.edu.schoolname.schoolbusmanagementsystem.dao.TripDAO;
 import vn.edu.schoolname.schoolbusmanagementsystem.dao.UserDAO;
-import vn.edu.schoolname.schoolbusmanagementsystem.model.Bus;
 import vn.edu.schoolname.schoolbusmanagementsystem.model.BusIssue;
-import vn.edu.schoolname.schoolbusmanagementsystem.model.Role;
-import vn.edu.schoolname.schoolbusmanagementsystem.model.Route;
-import vn.edu.schoolname.schoolbusmanagementsystem.model.RouteStop;
-import vn.edu.schoolname.schoolbusmanagementsystem.model.Stop;
-import vn.edu.schoolname.schoolbusmanagementsystem.model.Student;
-import vn.edu.schoolname.schoolbusmanagementsystem.model.Trip;
-import vn.edu.schoolname.schoolbusmanagementsystem.model.User;
 
 @Controller
-@RequestMapping("/admin") 
+@RequestMapping("/admin")
 public class AdminController {
 
     private final UserDAO userDAO = new UserDAO();
@@ -47,8 +34,21 @@ public class AdminController {
 
     @GetMapping("/dashboard")
     public String showAdminDashboard() {
-        return "admin/dashboard"; 
+        return "admin/dashboard";
     }
 
-   
+    @GetMapping("/issues")
+    public String listBusIssues(Model model) {
+        List<BusIssue> issueList = busIssueDAO.getAllIssues();
+        model.addAttribute("issues", issueList);
+        return "admin/issue-list";
+    }
+
+    @PostMapping("/issues/update-status")
+    public String updateIssueStatus(@RequestParam("issueId") int issueId,
+            @RequestParam("status") String status) {
+        busIssueDAO.updateIssueStatus(issueId, status);
+        return "redirect:/admin/issues";
+    }
+
 }
