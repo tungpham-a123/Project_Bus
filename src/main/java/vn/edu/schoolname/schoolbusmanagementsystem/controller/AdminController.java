@@ -50,5 +50,29 @@ public class AdminController {
         return "admin/dashboard"; 
     }
 
+    @GetMapping("/routes")
+    public String listRoutes(Model model) {
+        List<Route> routeList = routeDAO.getAllRoutes();
+        model.addAttribute("routes", routeList);
+        return "admin/route-list"; 
+    }
+
+    @GetMapping("/routes/add")
+    public String showAddRouteForm() {
+        return "admin/add-route";
+    }
+
+    @PostMapping("/routes/add")
+    public String addRoute(@RequestParam("routeName") String routeName,
+            @RequestParam("description") String description) {
+
+        Route newRoute = new Route();
+        newRoute.setRouteName(routeName);
+        newRoute.setDescription(description);
+
+        routeDAO.addRoute(newRoute);
+
+        return "redirect:/admin/routes";
+    }
    
 }
