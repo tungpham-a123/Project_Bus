@@ -74,5 +74,33 @@ public class AdminController {
 
         return "redirect:/admin/routes";
     }
+
+    @GetMapping("/routes/edit/{id}")
+    public String showEditRouteForm(@PathVariable("id") int id, Model model) {
+        Route route = routeDAO.getRouteById(id);
+        model.addAttribute("route", route);
+        return "admin/edit-route";
+    }
+
+    @PostMapping("/routes/edit")
+    public String updateRoute(@RequestParam("id") int id,
+            @RequestParam("routeName") String routeName,
+            @RequestParam("description") String description) {
+
+        Route route = new Route();
+        route.setId(id);
+        route.setRouteName(routeName);
+        route.setDescription(description);
+
+        routeDAO.updateRoute(route);
+
+        return "redirect:/admin/routes";
+    }
+
+    @GetMapping("/routes/delete/{id}")
+    public String deleteRoute(@PathVariable("id") int id) {
+        routeDAO.deleteRoute(id);
+        return "redirect:/admin/routes"; 
+    }
    
 }
