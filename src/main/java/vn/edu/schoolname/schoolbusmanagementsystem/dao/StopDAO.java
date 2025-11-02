@@ -13,6 +13,27 @@ import java.util.List;
 import vn.edu.schoolname.schoolbusmanagementsystem.model.Stop;
 
 public class StopDAO {
+    public List<Stop> getAvailableStopsForRoute(int routeId) {
+        List<Stop> stopList = new ArrayList<>();
+        String sql = "SELECT * FROM stops WHERE id NOT IN (SELECT stop_id FROM route_stops WHERE route_id = ?)";
 
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, routeId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Stop stop = new Stop();
+                    stop.setId(rs.getInt("id"));
+                    stop.setStopName(rs.getString("stop_name"));
+                    stop.setAddress(rs.getString("address"));
+                    stopList.add(stop);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return stopList;
+    }
     
 }

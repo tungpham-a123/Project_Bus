@@ -113,4 +113,27 @@ public class AdminController {
 
         return "admin/route-details"; 
     }
+
+    @GetMapping("/routes/{routeId}/add-stop")
+    public String showAddStopToRouteForm(@PathVariable("routeId") int routeId, Model model) {
+        Route route = routeDAO.getRouteById(routeId);
+        List<Stop> availableStops = stopDAO.getAvailableStopsForRoute(routeId);
+
+        model.addAttribute("route", route);
+        model.addAttribute("availableStops", availableStops);
+
+        return "admin/add-stop-to-route";
+    }
+    
+    @PostMapping("/routes/add-stop")
+    public String handleAddStopToRoute(@RequestParam("routeId") int routeId,
+            @RequestParam("stopId") int stopId,
+            @RequestParam("stopOrder") int stopOrder,
+            @RequestParam("estimatedPickupTime") String estimatedPickupTimeStr) {
+
+        Time estimatedTime = Time.valueOf(estimatedPickupTimeStr + ":00"); 
+        routeDAO.addStopToRoute(routeId, stopId, stopOrder, estimatedTime);
+
+        return "redirect:/admin/routes/details/" + routeId;
+    }
 }

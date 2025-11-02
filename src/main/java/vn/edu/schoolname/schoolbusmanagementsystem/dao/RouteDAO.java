@@ -36,4 +36,152 @@ public class RouteDAO {
         return routeList;
     }
     
+    public Route getRouteById(int id) {
+        String sql = "SELECT * FROM routes WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Route route = new Route();
+                    route.setId(rs.getInt("id"));
+                    route.setRouteName(rs.getString("route_name"));
+                    route.setDescription(rs.getString("description"));
+                    return route;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public void updateRoute(Route route) {
+        String sql = "UPDATE routes SET route_name = ?, description = ? WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, route.getRouteName());
+            ps.setString(2, route.getDescription());
+            ps.setInt(3, route.getId());
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void deleteRoute(int id) {
+        String deleteRouteStopsSql = "DELETE FROM route_stops WHERE route_id = ?";
+        String deleteRouteSql = "DELETE FROM routes WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false);
+
+            try (PreparedStatement psRouteStops = conn.prepareStatement(deleteRouteStopsSql)) {
+                psRouteStops.setInt(1, id);
+                psRouteStops.executeUpdate();
+
+                try (PreparedStatement psRoute = conn.prepareStatement(deleteRouteSql)) {
+                    psRoute.setInt(1, id);
+                    psRoute.executeUpdate();
+                }
+
+                conn.commit();
+
+            } catch (SQLException e) {
+                conn.rollback();
+                e.printStackTrace();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public RouteStop getRouteStopDetails(int routeId, int stopId) {
+        String sql = "SELECT rs.stop_order, rs.estimated_pickup_time, s.id as stop_id, s.stop_name, s.address "
+                + "FROM route_stops rs "
+                + "JOIN stops s ON rs.stop_id = s.id "
+                + "WHERE rs.route_id = ? AND rs.stop_id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, routeId);
+            ps.setInt(2, stopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Stop stop = new Stop();
+                    stop.setId(rs.getInt("stop_id"));
+                    stop.setStopName(rs.getString("stop_name"));
+                    stop.setAddress(rs.getString("address"));
+
+                    RouteStop routeStop = new RouteStop();
+                    routeStop.setStop(stop);
+                    routeStop.setStopOrder(rs.getInt("stop_order"));
+                    routeStop.setEstimatedPickupTime(rs.getTime("estimated_pickup_time"));
+
+                    return routeStop;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    
+    public List<RouteStop> getStopsByRouteId(int routeId) {
+        List<RouteStop> routeStops = new ArrayList<>();
+        String sql = "SELECT rs.stop_order, rs.estimated_pickup_time, s.id as stop_id, s.stop_name, s.address "
+                + "FROM route_stops rs "
+                + "JOIN stops s ON rs.stop_id = s.id "
+                + "WHERE rs.route_id = ? "
+                + "ORDER BY rs.stop_order ASC";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, routeId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Stop stop = new Stop();
+                    stop.setId(rs.getInt("stop_id"));
+                    stop.setStopName(rs.getString("stop_name"));
+                    stop.setAddress(rs.getString("address"));
+
+                    RouteStop routeStop = new RouteStop();
+                    routeStop.setStop(stop);
+                    routeStop.setStopOrder(rs.getInt("stop_order"));
+                    routeStop.setEstimatedPickupTime(rs.getTime("estimated_pickup_time"));
+
+                    routeStops.add(routeStop);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return routeStops;
+    }
+
+    public void addStopToRoute(int routeId, int stopId, int stopOrder, Time estimatedTime) {
+        String sql = "INSERT INTO route_stops (route_id, stop_id, stop_order, estimated_pickup_time) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, routeId);
+            ps.setInt(2, stopId);
+            ps.setInt(3, stopOrder);
+            ps.setTime(4, estimatedTime);
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
