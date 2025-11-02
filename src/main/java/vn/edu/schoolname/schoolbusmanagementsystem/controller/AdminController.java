@@ -103,4 +103,14 @@ public class AdminController {
         return "redirect:/admin/routes"; 
     }
    
+    @GetMapping("/routes/details/{id}")
+    public String showRouteDetails(@PathVariable("id") int id, Model model) {
+        Route route = routeDAO.getRouteById(id);
+        List<RouteStop> stops = routeDAO.getStopsByRouteId(id);
+
+        model.addAttribute("route", route);
+        model.addAttribute("stops", stops);
+
+        return "admin/route-details"; 
+    }
 }
