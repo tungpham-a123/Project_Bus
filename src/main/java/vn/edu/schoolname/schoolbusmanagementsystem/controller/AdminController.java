@@ -50,5 +50,87 @@ public class AdminController {
         busIssueDAO.updateIssueStatus(issueId, status);
         return "redirect:/admin/issues";
     }
+    private final StudentDAO studentDAO = new StudentDAO();
+
+    @GetMapping("/students")
+    public String listStudents(Model model) {
+        List<Student> studentList = studentDAO.getAllStudents();
+        model.addAttribute("students", studentList);
+        return "admin/student-list";
+    }
+
+    @GetMapping("/students/add")
+    public String showAddStudentForm(Model model) {
+        List<User> parents = userDAO.getUsersByRole("parent");
+        model.addAttribute("parents", parents);
+        return "admin/add-student";
+    }
+
+    @PostMapping("/students/add")
+    public String addStudent(@RequestParam("studentCode") String studentCode,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("className") String className,
+            @RequestParam("parentId") int parentId) {
+
+        Student newStudent = new Student();
+        newStudent.setStudentCode(studentCode);
+        newStudent.setFullName(fullName);
+        newStudent.setClassName(className);
+
+        User parent = new User();
+        parent.setId(parentId);
+        newStudent.setParent(parent);
+
+        studentDAO.addStudent(newStudent);
+
+        return "redirect:/admin/students";
+    }
+
+    @GetMapping("/students/edit/{id}")
+    public String showEditStudentForm(@PathVariable("id") int id, Model model) {
+        Student student = studentDAO.getStudentById(id);
+        List<Student> allStudents = studentDAO.getAllStudents();
+        for (Student s : allStudents) {
+            if (s.getId() == id) {
+                student.setParent(s.getParent());
+                break;
+            }
+        }
+
+        List<User> parents = userDAO.getUsersByRole("parent");
+
+        model.addAttribute("student", student);
+        model.addAttribute("parents", parents);
+
+        return "admin/edit-student";
+    }
+
+    @PostMapping("/students/edit")
+    public String updateStudent(@RequestParam("id") int id,
+            @RequestParam("studentCode") String studentCode,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("className") String className,
+            @RequestParam("parentId") int parentId) {
+
+        Student studentToUpdate = new Student();
+        studentToUpdate.setId(id);
+        studentToUpdate.setStudentCode(studentCode);
+        studentToUpdate.setFullName(fullName);
+        studentToUpdate.setClassName(className);
+
+        User parent = new User();
+        parent.setId(parentId);
+        studentToUpdate.setParent(parent);
+
+        studentDAO.updateStudent(studentToUpdate);
+
+        return "redirect:/admin/students";
+    }
+
+    @GetMapping("/students/delete/{id}")
+    public String deleteStudent(@PathVariable("id") int id) {
+        studentDAO.deleteStudent(id);
+        return "redirect:/admin/students";
+    }
 
 }
