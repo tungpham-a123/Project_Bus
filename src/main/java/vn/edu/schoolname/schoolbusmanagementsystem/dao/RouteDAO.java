@@ -184,4 +184,36 @@ public class RouteDAO {
         }
     }
 
+    public void removeStopFromRoute(int routeId, int stopId) {
+        String sql = "DELETE FROM route_stops WHERE route_id = ? AND stop_id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, routeId);
+            ps.setInt(2, stopId);
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public void updateRouteStop(int routeId, int stopId, int stopOrder, Time estimatedTime) {
+        String sql = "UPDATE route_stops SET stop_order = ?, estimated_pickup_time = ? WHERE route_id = ? AND stop_id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, stopOrder);
+            ps.setTime(2, estimatedTime);
+            ps.setInt(3, routeId);
+            ps.setInt(4, stopId);
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

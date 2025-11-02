@@ -136,4 +136,37 @@ public class AdminController {
 
         return "redirect:/admin/routes/details/" + routeId;
     }
+
+    @GetMapping("/routes/{routeId}/remove-stop/{stopId}")
+    public String handleRemoveStopFromRoute(@PathVariable("routeId") int routeId,
+            @PathVariable("stopId") int stopId) {
+
+        routeDAO.removeStopFromRoute(routeId, stopId);
+
+        return "redirect:/admin/routes/details/" + routeId;
+    }
+
+    @GetMapping("/routes/{routeId}/edit-stop/{stopId}")
+    public String showEditRouteStopForm(@PathVariable("routeId") int routeId,
+            @PathVariable("stopId") int stopId, Model model) {
+        Route route = routeDAO.getRouteById(routeId);
+        RouteStop routeStop = routeDAO.getRouteStopDetails(routeId, stopId);
+
+        model.addAttribute("route", route);
+        model.addAttribute("routeStop", routeStop);
+
+        return "admin/edit-route-stop";
+    }
+
+    @PostMapping("/routes/edit-stop")
+    public String handleUpdateRouteStop(@RequestParam("routeId") int routeId,
+            @RequestParam("stopId") int stopId,
+            @RequestParam("stopOrder") int stopOrder,
+            @RequestParam("estimatedPickupTime") String estimatedPickupTimeStr) {
+
+        Time estimatedTime = Time.valueOf(estimatedPickupTimeStr + ":00");
+        routeDAO.updateRouteStop(routeId, stopId, stopOrder, estimatedTime);
+
+        return "redirect:/admin/routes/details/" + routeId;
+    }
 }
