@@ -52,4 +52,21 @@ public class BusIssueDAO {
         }
         return issueList;
     }
+
+    public void addIssue(BusIssue issue) {
+        String sql = "INSERT INTO bus_issues (bus_id, reported_by, issue_description, status) VALUES (?, ?, ?, ?)";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, issue.getBus().getId());
+            ps.setInt(2, issue.getReportedBy().getId());
+            ps.setString(3, issue.getIssueDescription());
+            ps.setString(4, "reported"); 
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -36,4 +36,31 @@ public class DriverController {
         return "driver/dashboard";
     }
 
+    @GetMapping("/report-issue")
+    public String showReportIssueForm(Model model) {
+        List<Bus> buses = busDAO.getAllBuses();
+        model.addAttribute("buses", buses);
+        return "driver/report-issue";
+    }
+
+    @PostMapping("/report-issue")
+    public String handleReportIssue(@RequestParam("busId") int busId,
+            @RequestParam("issueDescription") String description,
+            HttpSession session) {
+
+        User driver = (User) session.getAttribute("user");
+
+        Bus bus = new Bus();
+        bus.setId(busId);
+
+        BusIssue newIssue = new BusIssue();
+        newIssue.setBus(bus);
+        newIssue.setReportedBy(driver);
+        newIssue.setIssueDescription(description);
+
+        busIssueDAO.addIssue(newIssue);
+
+        return "redirect:/driver/dashboard";
+    }
+
 }
