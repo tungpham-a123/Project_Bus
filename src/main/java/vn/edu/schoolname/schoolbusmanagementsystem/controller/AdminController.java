@@ -50,6 +50,7 @@ public class AdminController {
         return "admin/dashboard"; 
     }
 
+    //khang
        @GetMapping("/users")
     public String listUsers(Model model) {
         List<User> userList = userDAO.getAllUsers();
