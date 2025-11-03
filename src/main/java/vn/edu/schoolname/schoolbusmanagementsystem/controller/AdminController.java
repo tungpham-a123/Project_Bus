@@ -49,6 +49,58 @@ public class AdminController {
     public String showAdminDashboard() {
         return "admin/dashboard"; 
     }
+     @GetMapping("/stops")
+    public String listStops(Model model) {
+        List<Stop> stopList = stopDAO.getAllStops();
+        model.addAttribute("stops", stopList);
+        return "admin/stop-list"; 
+    }
+
+    @GetMapping("/stops/add")
+    public String showAddStopForm() {
+        return "admin/add-stop"; 
+    }
+
+    @PostMapping("/stops/add")
+    public String addStop(@RequestParam("stopName") String stopName,
+            @RequestParam("address") String address) {
+
+        Stop newStop = new Stop();
+        newStop.setStopName(stopName);
+        newStop.setAddress(address);
+
+        stopDAO.addStop(newStop);
+
+        return "redirect:/admin/stops";
+    }
+
+    @GetMapping("/stops/edit/{id}")
+    public String showEditStopForm(@PathVariable("id") int id, Model model) {
+        Stop stop = stopDAO.getStopById(id);
+        model.addAttribute("stop", stop);
+        return "admin/edit-stop"; 
+    }
+
+    @PostMapping("/stops/edit")
+    public String updateStop(@RequestParam("id") int id,
+            @RequestParam("stopName") String stopName,
+            @RequestParam("address") String address) {
+
+        Stop stop = new Stop();
+        stop.setId(id);
+        stop.setStopName(stopName);
+        stop.setAddress(address);
+
+        stopDAO.updateStop(stop);
+
+        return "redirect:/admin/stops";
+    }
+
+    @GetMapping("/stops/delete/{id}")
+    public String deleteStop(@PathVariable("id") int id) {
+        stopDAO.deleteStop(id);
+        return "redirect:/admin/stops";
+    }
 
    
 }
