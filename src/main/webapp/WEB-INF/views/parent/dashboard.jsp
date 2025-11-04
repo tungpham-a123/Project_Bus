@@ -240,12 +240,14 @@
                                         <c:choose>
                                             <c:when test="${not empty student.registration.attendanceStatus}">
                                                 <c:set var="status" value="${student.registration.attendanceStatus.status}"/>
-                                                <span class="status-badge 
-                                                    ${status == 'Đã lên xe' ? 'status-present' : ''}
-                                                    ${status == 'Đã xuống xe' ? 'status-checked-out' : ''}
-                                                    ${status == 'Vắng' ? 'status-absent' : ''}">
-                                                    ${status}
-                                                </span>
+                                                <span class="status-badge
+                                                          ${status == 'boarded' ? 'status-present' : ''}
+                                                          ${status == 'Đã xuống xe' ? 'status-checked-out' : ''}
+                                                          ${status == 'notified_absence' ? 'status-absent' : ''}">
+                                                        ${status == 'boarded' ? 'Đã lên xe' :
+                                                          status == 'completed' ? 'Đã xuống xe' :
+                                                          status == 'notified_absence' ? 'Vắng' : 'Chưa đến'}
+                                                    </span>
                                                 <c:if test="${not empty student.registration.attendanceStatus.checkInTime}">
                                                     (Lúc <fmt:formatDate value="${student.registration.attendanceStatus.checkInTime}" pattern="HH:mm" />)
                                                 </c:if>
