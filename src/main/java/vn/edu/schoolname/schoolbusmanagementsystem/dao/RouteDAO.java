@@ -35,7 +35,22 @@ public class RouteDAO {
         }
         return routeList;
     }
-    
+
+    public void addRoute(Route route) {
+        String sql = "INSERT INTO routes (route_name, description) VALUES (?, ?)";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, route.getRouteName());
+            ps.setString(2, route.getDescription());
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public Route getRouteById(int id) {
         String sql = "SELECT * FROM routes WHERE id = ?";
 
@@ -73,7 +88,7 @@ public class RouteDAO {
             e.printStackTrace();
         }
     }
-    
+
     public void deleteRoute(int id) {
         String deleteRouteStopsSql = "DELETE FROM route_stops WHERE route_id = ?";
         String deleteRouteSql = "DELETE FROM routes WHERE id = ?";
@@ -102,38 +117,6 @@ public class RouteDAO {
         }
     }
 
-    public RouteStop getRouteStopDetails(int routeId, int stopId) {
-        String sql = "SELECT rs.stop_order, rs.estimated_pickup_time, s.id as stop_id, s.stop_name, s.address "
-                + "FROM route_stops rs "
-                + "JOIN stops s ON rs.stop_id = s.id "
-                + "WHERE rs.route_id = ? AND rs.stop_id = ?";
-
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, routeId);
-            ps.setInt(2, stopId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    Stop stop = new Stop();
-                    stop.setId(rs.getInt("stop_id"));
-                    stop.setStopName(rs.getString("stop_name"));
-                    stop.setAddress(rs.getString("address"));
-
-                    RouteStop routeStop = new RouteStop();
-                    routeStop.setStop(stop);
-                    routeStop.setStopOrder(rs.getInt("stop_order"));
-                    routeStop.setEstimatedPickupTime(rs.getTime("estimated_pickup_time"));
-
-                    return routeStop;
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-    
     public List<RouteStop> getStopsByRouteId(int routeId) {
         List<RouteStop> routeStops = new ArrayList<>();
         String sql = "SELECT rs.stop_order, rs.estimated_pickup_time, s.id as stop_id, s.stop_name, s.address "
@@ -198,7 +181,39 @@ public class RouteDAO {
             e.printStackTrace();
         }
     }
-    
+
+    public RouteStop getRouteStopDetails(int routeId, int stopId) {
+        String sql = "SELECT rs.stop_order, rs.estimated_pickup_time, s.id as stop_id, s.stop_name, s.address "
+                + "FROM route_stops rs "
+                + "JOIN stops s ON rs.stop_id = s.id "
+                + "WHERE rs.route_id = ? AND rs.stop_id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, routeId);
+            ps.setInt(2, stopId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Stop stop = new Stop();
+                    stop.setId(rs.getInt("stop_id"));
+                    stop.setStopName(rs.getString("stop_name"));
+                    stop.setAddress(rs.getString("address"));
+
+                    RouteStop routeStop = new RouteStop();
+                    routeStop.setStop(stop);
+                    routeStop.setStopOrder(rs.getInt("stop_order"));
+                    routeStop.setEstimatedPickupTime(rs.getTime("estimated_pickup_time"));
+
+                    return routeStop;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public void updateRouteStop(int routeId, int stopId, int stopOrder, Time estimatedTime) {
         String sql = "UPDATE route_stops SET stop_order = ?, estimated_pickup_time = ? WHERE route_id = ? AND stop_id = ?";
 
