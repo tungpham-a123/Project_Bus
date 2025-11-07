@@ -101,11 +101,11 @@ public class AdminController {
     }
 
     @PostMapping("/users/edit")
-    public String updateUser(@RequestParam int id,
-            @RequestParam String fullName,
-            @RequestParam String phone,
-            @RequestParam String email,
-            @RequestParam int roleId) {
+    public String updateUser(@RequestParam("id") int id,
+            @RequestParam("fullName") String fullName,
+            @RequestParam("phone") String phone,
+            @RequestParam("email") String email,
+            @RequestParam("roleId") int roleId) {
 
         User user = new User();
         user.setId(id);
