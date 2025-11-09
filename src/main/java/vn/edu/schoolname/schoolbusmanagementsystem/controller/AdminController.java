@@ -51,18 +51,18 @@ public class AdminController {
     }
 
     //khang
-       @GetMapping("/users")
+   @GetMapping("/users")
     public String listUsers(Model model) {
         List<User> userList = userDAO.getAllUsers();
         model.addAttribute("users", userList);
-        return "admin/user-list"; 
+        return "admin/user-list";
     }
 
     @GetMapping("/users/add")
     public String showAddUserForm(Model model) {
         List<Role> roles = roleDAO.getAllRoles();
         model.addAttribute("roles", roles);
-        return "admin/add-user"; 
+        return "admin/add-user";
     }
 
     @PostMapping("/users/add")
@@ -71,25 +71,30 @@ public class AdminController {
             @RequestParam("fullName") String fullName,
             @RequestParam("phone") String phone,
             @RequestParam("email") String email,
-            @RequestParam("roleId") int roleId) {
+            @RequestParam("roleId") int roleId,
+            Model model) {
 
-        User newUser = new User();
-        newUser.setUsername(username);
-        newUser.setPassword(password); 
-        newUser.setFullName(fullName);
-        newUser.setPhone(phone);
-        newUser.setEmail(email);
-
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setFullName(fullName);
+        user.setPhone(phone);
+        user.setEmail(email);
         Role role = new Role();
         role.setId(roleId);
-        newUser.setRole(role);
+        user.setRole(role);
 
-        userDAO.addUser(newUser);
+        String error = userDAO.addUser(user);
+        if (error != null) {
+            model.addAttribute("error", error);
+            model.addAttribute("roles", roleDAO.getAllRoles());
+            return "admin/add-user"; // trả lại form với thông báo lỗi
+        }
 
         return "redirect:/admin/users";
     }
 
-        @GetMapping("/users/edit/{id}")
+    @GetMapping("/users/edit/{id}")
     public String showEditUserForm(@PathVariable("id") int id, Model model) {
         User user = userDAO.getUserById(id);
         List<Role> roles = roleDAO.getAllRoles();
@@ -97,15 +102,15 @@ public class AdminController {
         model.addAttribute("user", user);
         model.addAttribute("roles", roles);
 
-        return "admin/edit-user"; 
+        return "admin/edit-user";
     }
 
     @PostMapping("/users/edit")
-    public String updateUser(@RequestParam("id") int id,
-            @RequestParam("fullName") String fullName,
-            @RequestParam("phone") String phone,
-            @RequestParam("email") String email,
-            @RequestParam("roleId") int roleId) {
+    public String updateUser(@RequestParam int id,
+            @RequestParam String fullName,
+            @RequestParam String phone,
+            @RequestParam String email,
+            @RequestParam int roleId) {
 
         User user = new User();
         user.setId(id);
@@ -157,34 +162,68 @@ public class AdminController {
             @RequestParam("routeId") int routeId,
             @RequestParam("busId") int busId,
             @RequestParam("driverId") int driverId,
-            @RequestParam("monitorId") int monitorId) throws ParseException {
+            @RequestParam("monitorId") int monitorId,
+            Model model) {
 
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        Date tripDate = formatter.parse(tripDateStr);
+        model.addAttribute("routes", routeDAO.getAllRoutes());
+        model.addAttribute("buses", busDAO.getAllBuses());
+        model.addAttribute("drivers", userDAO.getUsersByRole("driver"));
+        model.addAttribute("monitors", userDAO.getUsersByRole("monitor"));
 
-        Trip newTrip = new Trip();
-        newTrip.setTripDate(tripDate);
-        newTrip.setTripType(tripType);
+        if (tripDateStr == null || tripDateStr.isEmpty()) {
+            model.addAttribute("error", "Ngày chuyến đi không được để trống.");
+            return "admin/add-trip";
+        }
 
-        Route route = new Route();
-        route.setId(routeId);
-        newTrip.setRoute(route);
+        try {
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+            java.util.Date utilDate = formatter.parse(tripDateStr);
+            java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime());
 
-        Bus bus = new Bus();
-        bus.setId(busId);
-        newTrip.setBus(bus);
+            if (routeDAO.getRouteById(routeId) == null
+                    || busDAO.getBusById(busId) == null
+                    || userDAO.getUserById(driverId) == null
+                    || userDAO.getUserById(monitorId) == null) {
+                model.addAttribute("error", "Dữ liệu không hợp lệ, vui lòng kiểm tra lại.");
+                return "admin/add-trip";
+            }
 
-        User driver = new User();
-        driver.setId(driverId);
-        newTrip.setDriver(driver);
+            if (tripDAO.isBusBusy(busId, sqlDate, null)) {
+                model.addAttribute("error", "Xe này đã có chuyến khác vào ngày này.");
+                return "admin/add-trip";
+            }
+            if (tripDAO.isDriverBusy(driverId, sqlDate, null)) {
+                model.addAttribute("error", "Tài xế này đã có chuyến khác vào ngày này.");
+                return "admin/add-trip";
+            }
 
-        User monitor = new User();
-        monitor.setId(monitorId);
-        newTrip.setMonitor(monitor);
+            Trip newTrip = new Trip();
+            newTrip.setTripDate(utilDate);
+            newTrip.setTripType(tripType);
 
-        tripDAO.addTrip(newTrip);
+            Route route = new Route();
+            route.setId(routeId);
+            newTrip.setRoute(route);
 
-        return "redirect:/admin/trips";
+            Bus bus = new Bus();
+            bus.setId(busId);
+            newTrip.setBus(bus);
+
+            User driver = new User();
+            driver.setId(driverId);
+            newTrip.setDriver(driver);
+
+            User monitor = new User();
+            monitor.setId(monitorId);
+            newTrip.setMonitor(monitor);
+
+            tripDAO.addTrip(newTrip);
+            return "redirect:/admin/trips";
+
+        } catch (ParseException e) {
+            model.addAttribute("error", "Ngày chuyến đi không hợp lệ.");
+            return "admin/add-trip";
+        }
     }
 
     @GetMapping("/trips/edit/{id}")
@@ -206,20 +245,56 @@ public class AdminController {
     }
 
     @PostMapping("/trips/edit")
-    public String updateTrip(@RequestParam("id") int id,
+    public String updateTrip(
+            @RequestParam("id") int id,
             @RequestParam("tripDate") String tripDateStr,
             @RequestParam("tripType") String tripType,
             @RequestParam("routeId") int routeId,
             @RequestParam("busId") int busId,
             @RequestParam("driverId") int driverId,
-            @RequestParam("monitorId") int monitorId) throws ParseException {
+            @RequestParam("monitorId") int monitorId,
+            Model model) throws ParseException {
+
+        // Validate ngày trip
+        if (tripDateStr == null || tripDateStr.isEmpty()) {
+            model.addAttribute("error", "Ngày chuyến đi không được để trống.");
+            model.addAttribute("trip", tripDAO.getTripById(id));
+            model.addAttribute("routes", routeDAO.getAllRoutes());
+            model.addAttribute("buses", busDAO.getAllBuses());
+            model.addAttribute("drivers", userDAO.getUsersByRole("driver"));
+            model.addAttribute("monitors", userDAO.getUsersByRole("monitor"));
+            return "admin/edit-trip";
+        }
 
         SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-        Date tripDate = formatter.parse(tripDateStr);
+        java.util.Date utilDate = formatter.parse(tripDateStr);
+        java.sql.Date sqlDate = new java.sql.Date(utilDate.getTime()); // để check trùng lịch
 
+        // Validate trùng lịch
+        if (tripDAO.isBusBusy(busId, sqlDate, id)) {
+            model.addAttribute("error", "Xe này đã có chuyến khác vào ngày này.");
+            model.addAttribute("trip", tripDAO.getTripById(id));
+            model.addAttribute("routes", routeDAO.getAllRoutes());
+            model.addAttribute("buses", busDAO.getAllBuses());
+            model.addAttribute("drivers", userDAO.getUsersByRole("driver"));
+            model.addAttribute("monitors", userDAO.getUsersByRole("monitor"));
+            return "admin/edit-trip";
+        }
+
+        if (tripDAO.isDriverBusy(driverId, sqlDate, id)) {
+            model.addAttribute("error", "Tài xế này đã có chuyến khác vào ngày này.");
+            model.addAttribute("trip", tripDAO.getTripById(id));
+            model.addAttribute("routes", routeDAO.getAllRoutes());
+            model.addAttribute("buses", busDAO.getAllBuses());
+            model.addAttribute("drivers", userDAO.getUsersByRole("driver"));
+            model.addAttribute("monitors", userDAO.getUsersByRole("monitor"));
+            return "admin/edit-trip";
+        }
+
+        // Tạo Trip object để update
         Trip tripToUpdate = new Trip();
         tripToUpdate.setId(id);
-        tripToUpdate.setTripDate(tripDate);
+        tripToUpdate.setTripDate(utilDate); // vẫn dùng java.util.Date
         tripToUpdate.setTripType(tripType);
 
         Route route = new Route();
