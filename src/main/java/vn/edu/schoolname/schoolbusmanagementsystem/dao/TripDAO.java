@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class TripDAO {
+
     public List<Trip> getAllTrips() {
         List<Trip> tripList = new ArrayList<>();
         String sql = "SELECT t.*, r.route_name, b.license_plate, driver.full_name as driver_name, monitor.full_name as monitor_name "
@@ -78,10 +79,67 @@ public class TripDAO {
             e.printStackTrace();
         }
     }
+// Kiểm tra xe đã có chuyến khác vào cùng ngày chưa
+
+    public boolean isBusBusy(int busId, Date tripDate, Integer excludeTripId) {
+        String sql = "SELECT COUNT(*) FROM trips WHERE bus_id = ? AND trip_date = ?";
+
+        if (excludeTripId != null) {
+            sql += " AND id != ?";
+        }
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, busId);
+            ps.setDate(2, new java.sql.Date(tripDate.getTime()));
+            if (excludeTripId != null) {
+                ps.setInt(3, excludeTripId);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+// Kiểm tra driver đã có chuyến khác vào cùng ngày chưa
+    public boolean isDriverBusy(int driverId, Date tripDate, Integer excludeTripId) {
+        String sql = "SELECT COUNT(*) FROM trips WHERE driver_id = ? AND trip_date = ?";
+
+        if (excludeTripId != null) {
+            sql += " AND id != ?";
+        }
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, driverId);
+            ps.setDate(2, new java.sql.Date(tripDate.getTime()));
+            if (excludeTripId != null) {
+                ps.setInt(3, excludeTripId);
+            }
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next() && rs.getInt(1) > 0) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 
     public Trip getTripById(int id) {
-        String sql = "SELECT * FROM trips WHERE id = ?";
-
+        String sql = "SELECT t.*, r.route_name, b.license_plate, driver.full_name as driver_name, monitor.full_name as monitor_name "
+                + "FROM trips t "
+                + "LEFT JOIN routes r ON t.route_id = r.id "
+                + "LEFT JOIN buses b ON t.bus_id = b.id "
+                + "LEFT JOIN users driver ON t.driver_id = driver.id "
+                + "LEFT JOIN users monitor ON t.monitor_id = monitor.id "
+                + "WHERE t.id = ?";
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, id);
@@ -93,21 +151,27 @@ public class TripDAO {
                     trip.setTripDate(rs.getDate("trip_date"));
                     trip.setTripType(rs.getString("trip_type"));
                     trip.setStatus(rs.getString("status"));
+                    trip.setActualStartTime(rs.getTimestamp("actual_start_time"));
+                    trip.setActualEndTime(rs.getTimestamp("actual_end_time"));
 
                     Route route = new Route();
                     route.setId(rs.getInt("route_id"));
+                    route.setRouteName(rs.getString("route_name"));
                     trip.setRoute(route);
 
                     Bus bus = new Bus();
                     bus.setId(rs.getInt("bus_id"));
+                    bus.setLicensePlate(rs.getString("license_plate"));
                     trip.setBus(bus);
 
                     User driver = new User();
                     driver.setId(rs.getInt("driver_id"));
+                    driver.setFullName(rs.getString("driver_name"));
                     trip.setDriver(driver);
 
                     User monitor = new User();
                     monitor.setId(rs.getInt("monitor_id"));
+                    monitor.setFullName(rs.getString("monitor_name"));
                     trip.setMonitor(monitor);
 
                     return trip;
@@ -161,7 +225,7 @@ public class TripDAO {
                 conn.commit();
 
             } catch (SQLException e) {
-                conn.rollback(); 
+                conn.rollback();
                 e.printStackTrace();
             }
 
@@ -240,6 +304,29 @@ public class TripDAO {
                     trip.setTripDate(rs.getDate("trip_date"));
                     trip.setTripType(rs.getString("trip_type"));
                     trip.setStatus(rs.getString("status"));
+                    trip.setActualStartTime(rs.getTimestamp("actual_start_time"));
+                    trip.setActualEndTime(rs.getTimestamp("actual_end_time"));
+
+                    Route route = new Route();
+                    route.setId(rs.getInt("route_id"));
+                    route.setRouteName(rs.getString("route_name"));
+                    trip.setRoute(route);
+
+                    Bus bus = new Bus();
+                    bus.setId(rs.getInt("bus_id"));
+                    bus.setLicensePlate(rs.getString("license_plate"));
+                    trip.setBus(bus);
+
+                    User driver = new User();
+                    driver.setId(rs.getInt("driver_id"));
+                    driver.setFullName(rs.getString("driver_name"));
+                    trip.setDriver(driver);
+
+                    User monitor = new User();
+                    monitor.setId(rs.getInt("monitor_id"));
+                    monitor.setFullName(rs.getString("monitor_name"));
+                    trip.setMonitor(monitor);
+
                     tripList.add(trip);
                 }
             }
@@ -247,6 +334,34 @@ public class TripDAO {
             e.printStackTrace();
         }
         return tripList;
+    }
+
+    public void updateTripStatus(int tripId, String status) {
+        String sql;
+        Timestamp now = new Timestamp(System.currentTimeMillis());
+
+        if (status.equals("ongoing")) {
+            sql = "UPDATE trips SET status = ?, actual_start_time = ? WHERE id = ?";
+        } else if (status.equals("completed")) {
+            sql = "UPDATE trips SET status = ?, actual_end_time = ? WHERE id = ?";
+        } else {
+            sql = "UPDATE trips SET status = ? WHERE id = ?";
+        }
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, status);
+            if (status.equals("ongoing") || status.equals("completed")) {
+                ps.setTimestamp(2, now);
+                ps.setInt(3, tripId);
+            } else {
+                ps.setInt(2, tripId);
+            }
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
 }
