@@ -248,27 +248,33 @@
                     <div class="card-header">
                         <h2>Sửa thông tin chuyến đi</h2>
                     </div>
-
+                    <c:if test="${not empty error}">
+                        <div style="color:red; margin-bottom:1rem;">${error}</div>
+                    </c:if>
                     <form action="<c:url value='/admin/trips/edit'/>" method="post">
                         <input type="hidden" name="id" value="${trip.id}">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="tripDate"><i class="fas fa-calendar-day"></i> Ngày đi</label>
                                 <fmt:formatDate value="${trip.tripDate}" pattern="yyyy-MM-dd" var="formattedDate" />
-                                <input type="date" id="tripDate" name="tripDate" value="${formattedDate}" required>
+                                <input type="date" id="tripDate" name="tripDate" 
+                                       value="${param.tripDate != null ? param.tripDate : (trip != null ? formattedDate : '')}" required>
                             </div>
                             <div class="form-group">
                                 <label for="tripType"><i class="fas fa-exchange-alt"></i> Loại chuyến</label>
                                 <select id="tripType" name="tripType">
-                                    <option value="pickup" ${trip.tripType == 'pickup' ? 'selected' : ''}>Đón học sinh</option>
-                                    <option value="dropoff" ${trip.tripType == 'dropoff' ? 'selected' : ''}>Trả học sinh</option>
+                                    <option value="pickup" ${param.tripType != null && param.tripType == 'pickup' ? 'selected' : (trip != null && trip.tripType == 'pickup' ? 'selected' : '')}>Đón học sinh</option>
+                                    <option value="dropoff" ${param.tripType != null && param.tripType == 'dropoff' ? 'selected' : (trip != null && trip.tripType == 'dropoff' ? 'selected' : '')}>Trả học sinh</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label for="routeId"><i class="fas fa-route"></i> Tuyến xe</label>
                                 <select id="routeId" name="routeId" required>
                                     <c:forEach var="route" items="${routes}">
-                                        <option value="${route.id}" ${trip.route.id == route.id ? 'selected' : ''}>${route.routeName}</option>
+                                        <option value="${route.id}" 
+                                                ${param.routeId != null && param.routeId == route.id ? 'selected' : (trip != null && trip.route.id == route.id ? 'selected' : '')}>
+                                            ${route.routeName}
+                                        </option>
                                     </c:forEach>
                                 </select>
                             </div>
@@ -276,7 +282,10 @@
                                 <label for="busId"><i class="fas fa-bus-alt"></i> Xe buýt</label>
                                 <select id="busId" name="busId" required>
                                     <c:forEach var="bus" items="${buses}">
-                                        <option value="${bus.id}" ${trip.bus.id == bus.id ? 'selected' : ''}>${bus.licensePlate}</option>
+                                        <option value="${bus.id}" 
+                                                ${param.busId != null && param.busId == bus.id ? 'selected' : (trip != null && trip.bus.id == bus.id ? 'selected' : '')}>
+                                            ${bus.licensePlate}
+                                        </option>
                                     </c:forEach>
                                 </select>
                             </div>
@@ -284,7 +293,10 @@
                                 <label for="driverId"><i class="fas fa-user-tie"></i> Lái xe</label>
                                 <select id="driverId" name="driverId" required>
                                     <c:forEach var="driver" items="${drivers}">
-                                        <option value="${driver.id}" ${trip.driver.id == driver.id ? 'selected' : ''}>${driver.fullName}</option>
+                                        <option value="${driver.id}" 
+                                                ${param.driverId != null && param.driverId == driver.id ? 'selected' : (trip != null && trip.driver.id == driver.id ? 'selected' : '')}>
+                                            ${driver.fullName}
+                                        </option>
                                     </c:forEach>
                                 </select>
                             </div>
@@ -292,7 +304,10 @@
                                 <label for="monitorId"><i class="fas fa-user-check"></i> Người quản lý</label>
                                 <select id="monitorId" name="monitorId" required>
                                     <c:forEach var="monitor" items="${monitors}">
-                                        <option value="${monitor.id}" ${trip.monitor.id == monitor.id ? 'selected' : ''}>${monitor.fullName}</option>
+                                        <option value="${monitor.id}" 
+                                                ${param.monitorId != null && param.monitorId == monitor.id ? 'selected' : (trip != null && trip.monitor.id == monitor.id ? 'selected' : '')}>
+                                            ${monitor.fullName}
+                                        </option>
                                     </c:forEach>
                                 </select>
                             </div>
