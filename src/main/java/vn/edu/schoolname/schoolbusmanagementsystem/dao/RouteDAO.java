@@ -36,5 +36,26 @@ public class RouteDAO {
         }
         return routeList;
     }
+           public Route getRouteById(int id) {
+        String sql = "SELECT * FROM routes WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Route route = new Route();
+                    route.setId(rs.getInt("id"));
+                    route.setRouteName(rs.getString("route_name"));
+                    route.setDescription(rs.getString("description"));
+                    return route;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
    
 }
