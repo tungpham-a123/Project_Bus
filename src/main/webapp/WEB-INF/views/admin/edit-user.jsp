@@ -257,7 +257,11 @@
                         <h2>Sửa thông tin người dùng</h2>
                         <p>Tên đăng nhập: <strong>${user.username}</strong></p>
                     </div>
-
+                    <c:if test="${not empty error}">
+                        <div style="color:red; margin-bottom:1rem;">
+                            ${error}
+                        </div>
+                    </c:if>
                     <form action="<c:url value='/admin/users/edit'/>" method="post">
                         <input type="hidden" name="id" value="${user.id}">
                         <div class="form-grid">
@@ -271,11 +275,13 @@
                             </div>
                             <div class="form-group">
                                 <label for="email"><i class="fas fa-envelope"></i> Email</label>
-                                <input type="email" id="email" name="email" value="${user.email}">
+                                <input type="email" id="email" name="email" value="${user.email}" 
+                                       pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$" title="Email không hợp lệ">
                             </div>
                             <div class="form-group">
                                 <label for="phone"><i class="fas fa-phone"></i> Số điện thoại</label>
-                                <input type="text" id="phone" name="phone" value="${user.phone}">
+                                <input type="text" id="phone" name="phone" value="${user.phone}" 
+                                       pattern="^\d{10}$" title="Số điện thoại phải 10 số">
                             </div>
                             <div class="form-group" style="grid-column: 1 / -1;">
                                 <label for="roleId"><i class="fas fa-user-shield"></i> Vai trò</label>
