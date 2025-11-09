@@ -33,5 +33,26 @@ public class BusDAO {
         }
         return busList;
     }
-    
+        public Bus getBusById(int id) {
+        String sql = "SELECT * FROM buses WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Bus bus = new Bus();
+                    bus.setId(rs.getInt("id"));
+                    bus.setLicensePlate(rs.getString("license_plate"));
+                    bus.setCapacity(rs.getInt("capacity"));
+                    bus.setStatus(rs.getString("status"));
+                    return bus;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
