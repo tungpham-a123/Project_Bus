@@ -248,12 +248,16 @@
                     <div class="card-header">
                         <h2>Tạo người dùng mới</h2>
                     </div>
-
+                    <c:if test="${not empty error}">
+                        <div style="color: red; margin-bottom: 1rem;">
+                            ${error}
+                        </div>
+                    </c:if>
                     <form action="<c:url value='/admin/users/add'/>" method="post">
                         <div class="form-grid">
                             <div class="form-group">
                                 <label for="username"><i class="fas fa-user-tag"></i> Tên đăng nhập</label>
-                                <input type="text" id="username" name="username" required>
+                                <input type="text" id="username" name="username" required value="${param.username}">
                             </div>
                             <div class="form-group">
                                 <label for="password"><i class="fas fa-key"></i> Mật khẩu</label>
@@ -261,15 +265,17 @@
                             </div>
                             <div class="form-group">
                                 <label for="fullName"><i class="fas fa-user-circle"></i> Họ và Tên</label>
-                                <input type="text" id="fullName" name="fullName" required>
+                                <input type="text" id="fullName" name="fullName" required value="${param.fullName}">
                             </div>
                             <div class="form-group">
                                 <label for="email"><i class="fas fa-envelope"></i> Email</label>
-                                <input type="email" id="email" name="email">
+                                <input type="email" id="email" name="email" value="${param.email}" 
+                                       pattern="^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$" title="Email không hợp lệ">
                             </div>
                             <div class="form-group">
                                 <label for="phone"><i class="fas fa-phone"></i> Số điện thoại</label>
-                                <input type="text" id="phone" name="phone">
+                                <input type="text" id="phone" name="phone" value="${param.phone}" 
+                                       pattern="^\d{10}$" title="Số điện thoại phải 10 số">
                             </div>
                             <div class="form-group">
                                 <label for="roleId"><i class="fas fa-user-shield"></i> Vai trò</label>
