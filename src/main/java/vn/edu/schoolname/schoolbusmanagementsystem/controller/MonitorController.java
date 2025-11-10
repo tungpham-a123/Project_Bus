@@ -34,5 +34,71 @@ public class MonitorController {
         return "monitor/dashboard";
     }
 
+    @GetMapping("/trip/{tripId}")
+    public String showAttendancePage(@PathVariable("tripId") int tripId, Model model) {
+        Trip trip = tripDAO.getTripById(tripId);
+        if (trip == null) {
+            return "redirect:/monitor/dashboard"; 
+        }
+        List<Student> students = studentDAO.getStudentsForTrip(trip.getRoute().getId(), tripId);
+
+        model.addAttribute("trip", trip);
+        model.addAttribute("students", students);
+
+        return "monitor/trip-attendance";
+    }
+
+    @PostMapping("/trip/end")
+    public String endTrip(@RequestParam("tripId") int tripId) {
+        tripDAO.updateTripStatus(tripId, "completed");
+        return "redirect:/monitor/trip/" + tripId;
+    }
+
+    @PostMapping("/trip/check-in")
+    public String handleCheckIn(@RequestParam("tripId") int tripId,
+            @RequestParam("studentId") int studentId,
+            @RequestParam("stopId") int stopId) {
+        attendanceDAO.checkIn(tripId, studentId, stopId);
+        return "redirect:/monitor/trip/" + tripId;
+    }
+
+    @PostMapping("/trip/check-out")
+    public String handleCheckOut(@RequestParam("tripId") int tripId,
+            @RequestParam("studentId") int studentId,
+            @RequestParam("stopId") int stopId) { 
+
+        attendanceDAO.checkOut(tripId, studentId, stopId); 
+
+        return "redirect:/monitor/trip/" + tripId;
+    }
+    @PostMapping("/trip/start")
+public String startTrip(
+        @RequestParam("tripId") int tripId,
+        HttpSession session) {
+    
+    User monitor = (User) session.getAttribute("user");
+    if (monitor == null) {
+        return "redirect:/login";
+    }
+
+    Trip trip = tripDAO.getTripById(tripId);
+
+    // Nếu trip không tồn tại hoặc không thuộc monitor này
+    if (trip == null || trip.getMonitor().getId() != monitor.getId()) {
+        return "redirect:/monitor/dashboard";
+    }
+
+    // Chỉ cho phép start nếu đang ở trạng thái "pending" hoặc "scheduled"
+    if (!trip.getStatus().equalsIgnoreCase("scheduled") && 
+        !trip.getStatus().equalsIgnoreCase("pending")) {
+        return "redirect:/monitor/trip/" + tripId;
+    }
+
+    // Update DB
+    tripDAO.updateTripStatus(tripId, "ongoing");
+
+    return "redirect:/monitor/trip/" + tripId;
+}
+
     
 }

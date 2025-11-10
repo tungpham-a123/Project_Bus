@@ -133,4 +133,60 @@ public class AdminController {
         return "redirect:/admin/students";
     }
 
+   @GetMapping("/buses")
+    public String listBuses(Model model) {
+        List<Bus> busList = busDAO.getAllBuses();
+        model.addAttribute("buses", busList);
+        return "admin/bus-list";
+    }
+
+    @GetMapping("/buses/add")
+    public String showAddBusForm() {
+        return "admin/add-bus"; 
+    }
+
+    @PostMapping("/buses/add")
+    public String addBus(@RequestParam("licensePlate") String licensePlate,
+            @RequestParam("capacity") int capacity,
+            @RequestParam("status") String status) {
+
+        Bus newBus = new Bus();
+        newBus.setLicensePlate(licensePlate);
+        newBus.setCapacity(capacity);
+        newBus.setStatus(status);
+
+        busDAO.addBus(newBus);
+
+        return "redirect:/admin/buses";
+    }
+
+    @GetMapping("/buses/edit/{id}")
+    public String showEditBusForm(@PathVariable("id") int id, Model model) {
+        Bus bus = busDAO.getBusById(id);
+        model.addAttribute("bus", bus);
+        return "admin/edit-bus";
+    }
+
+    @PostMapping("/buses/edit")
+    public String updateBus(@RequestParam("id") int id,
+            @RequestParam("licensePlate") String licensePlate,
+            @RequestParam("capacity") int capacity,
+            @RequestParam("status") String status) {
+
+        Bus bus = new Bus();
+        bus.setId(id);
+        bus.setLicensePlate(licensePlate);
+        bus.setCapacity(capacity);
+        bus.setStatus(status);
+
+        busDAO.updateBus(bus);
+
+        return "redirect:/admin/buses";
+    }
+
+    @GetMapping("/buses/delete/{id}")
+    public String deleteBus(@PathVariable("id") int id) {
+        busDAO.deleteBus(id);
+        return "redirect:/admin/buses";
+    }
 }
