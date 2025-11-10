@@ -25,6 +25,33 @@ public class DriverController {
     private final BusDAO busDAO = new BusDAO();
     private final BusIssueDAO busIssueDAO = new BusIssueDAO();
 
+    @GetMapping("/report-issue")
+    public String showReportIssueForm(Model model) {
+        List<Bus> buses = busDAO.getAllBuses();
+        model.addAttribute("buses", buses);
+        return "driver/report-issue";
+    }
+
+    @PostMapping("/report-issue")
+    public String handleReportIssue(@RequestParam("busId") int busId,
+            @RequestParam("issueDescription") String description,
+            HttpSession session) {
+
+        User driver = (User) session.getAttribute("user");
+
+        Bus bus = new Bus();
+        bus.setId(busId);
+
+        BusIssue newIssue = new BusIssue();
+        newIssue.setBus(bus);
+        newIssue.setReportedBy(driver);
+        newIssue.setIssueDescription(description);
+
+        busIssueDAO.addIssue(newIssue);
+
+        return "redirect:/driver/dashboard";
+    }
+
     @GetMapping("/dashboard")
     public String showDriverDashboard(HttpSession session, Model model) {
         User driver = (User) session.getAttribute("user");
