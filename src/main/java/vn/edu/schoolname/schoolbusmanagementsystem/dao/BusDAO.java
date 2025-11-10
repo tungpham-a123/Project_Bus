@@ -13,6 +13,10 @@ import java.util.List;
 import vn.edu.schoolname.schoolbusmanagementsystem.model.Bus;
 
 public class BusDAO {
+//khang
+        public List<Bus> getAllBuses() {
+        List<Bus> busList = new ArrayList<>();
+        String sql = "SELECT * FROM buses ORDER BY id DESC";
 
     public List<Bus> getAllBuses() {
         List<Bus> busList = new ArrayList<>();
@@ -33,6 +37,7 @@ public class BusDAO {
         }
         return busList;
     }
+        public Bus getBusById(int id) {
 
     public void addBus(Bus bus) {
         String sql = "INSERT INTO buses (license_plate, capacity, status) VALUES (?, ?, ?)";

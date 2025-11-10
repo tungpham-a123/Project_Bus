@@ -17,6 +17,45 @@ import vn.edu.schoolname.schoolbusmanagementsystem.model.Stop;
 
 
 public class RouteDAO {
+//khang
+       public List<Route> getAllRoutes() {
+        List<Route> routeList = new ArrayList<>();
+        String sql = "SELECT * FROM routes";
 
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                Route route = new Route();
+                route.setId(rs.getInt("id"));
+                route.setRouteName(rs.getString("route_name"));
+                route.setDescription(rs.getString("description"));
+                routeList.add(route);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return routeList;
+    }
+           public Route getRouteById(int id) {
+        String sql = "SELECT * FROM routes WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Route route = new Route();
+                    route.setId(rs.getInt("id"));
+                    route.setRouteName(rs.getString("route_name"));
+                    route.setDescription(rs.getString("description"));
+                    return route;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
    
 }

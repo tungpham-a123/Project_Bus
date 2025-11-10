@@ -12,6 +12,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class UserDAO {
 
@@ -43,7 +44,7 @@ public class UserDAO {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null; 
+        return null;
     }
 
     public List<User> getAllUsers() {
@@ -72,11 +73,51 @@ public class UserDAO {
         }
         return userList;
     }
+  // Regex đơn giản để validate email
+    private static final Pattern EMAIL_PATTERN = Pattern.compile(
+        "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"
+    );
 
-    public void addUser(User user) {
+    // Regex đơn giản để validate phone (10 số)
+    private static final Pattern PHONE_PATTERN = Pattern.compile(
+        "^\\d{10}$"
+    );
+
+    // Kiểm tra username đã tồn tại chưa
+    public boolean isUsernameExist(String username) {
+        String sql = "SELECT COUNT(*) FROM users WHERE username=?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, username);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    // Thêm người dùng với validate
+    public String addUser(User user) {
+        // Kiểm tra username
+        if (isUsernameExist(user.getUsername())) {
+            return "Tên đăng nhập đã tồn tại!";
+        }
+        // Kiểm tra email
+        if (!EMAIL_PATTERN.matcher(user.getEmail()).matches()) {
+            return "Email không hợp lệ!";
+        }
+        // Kiểm tra phone
+        if (!PHONE_PATTERN.matcher(user.getPhone()).matches()) {
+            return "Số điện thoại không hợp lệ!";
+        }
+
         String sql = "INSERT INTO users (username, password, full_name, phone, email, role_id) VALUES (?, ?, ?, ?, ?, ?)";
-
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, user.getUsername());
             ps.setString(2, user.getPassword());
@@ -86,10 +127,42 @@ public class UserDAO {
             ps.setInt(6, user.getRole().getId());
 
             ps.executeUpdate();
-
         } catch (SQLException e) {
             e.printStackTrace();
+            return "Lỗi cơ sở dữ liệu khi thêm người dùng!";
         }
+
+        return null; // null nghĩa là thành công
+    }
+
+    // Cập nhật người dùng với validate
+    public String updateUser(User user) {
+        // Kiểm tra email
+        if (!EMAIL_PATTERN.matcher(user.getEmail()).matches()) {
+            return "Email không hợp lệ!";
+        }
+        // Kiểm tra phone
+        if (!PHONE_PATTERN.matcher(user.getPhone()).matches()) {
+            return "Số điện thoại không hợp lệ!";
+        }
+
+        String sql = "UPDATE users SET full_name=?, phone=?, email=?, role_id=? WHERE id=?";
+        try (Connection conn = DBContext.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, user.getFullName());
+            ps.setString(2, user.getPhone());
+            ps.setString(3, user.getEmail());
+            ps.setInt(4, user.getRole().getId());
+            ps.setInt(5, user.getId());
+
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return "Lỗi cơ sở dữ liệu khi cập nhật người dùng!";
+        }
+
+        return null; // null nghĩa là thành công
     }
 
     public User getUserById(int id) {
@@ -120,24 +193,6 @@ public class UserDAO {
             e.printStackTrace();
         }
         return null;
-    }
-
-    public void updateUser(User user) {
-        String sql = "UPDATE users SET full_name = ?, phone = ?, email = ?, role_id = ? WHERE id = ?";
-
-        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, user.getFullName());
-            ps.setString(2, user.getPhone());
-            ps.setString(3, user.getEmail());
-            ps.setInt(4, user.getRole().getId());
-            ps.setInt(5, user.getId());
-
-            ps.executeUpdate();
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
     }
 
     public void deleteUser(int id) {
