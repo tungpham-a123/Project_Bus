@@ -18,6 +18,10 @@ public class BusDAO {
         List<Bus> busList = new ArrayList<>();
         String sql = "SELECT * FROM buses ORDER BY id DESC";
 
+    public List<Bus> getAllBuses() {
+        List<Bus> busList = new ArrayList<>();
+        String sql = "SELECT * FROM buses ORDER BY id DESC";
+
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
@@ -34,6 +38,24 @@ public class BusDAO {
         return busList;
     }
         public Bus getBusById(int id) {
+
+    public void addBus(Bus bus) {
+        String sql = "INSERT INTO buses (license_plate, capacity, status) VALUES (?, ?, ?)";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, bus.getLicensePlate());
+            ps.setInt(2, bus.getCapacity());
+            ps.setString(3, bus.getStatus());
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Bus getBusById(int id) {
         String sql = "SELECT * FROM buses WHERE id = ?";
 
         try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -54,5 +76,64 @@ public class BusDAO {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public void updateBus(Bus bus) {
+        String sql = "UPDATE buses SET license_plate = ?, capacity = ?, status = ? WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, bus.getLicensePlate());
+            ps.setInt(2, bus.getCapacity());
+            ps.setString(3, bus.getStatus());
+            ps.setInt(4, bus.getId());
+
+            ps.executeUpdate();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteBus(int busId) {
+        String deleteAttendanceSql = "DELETE FROM attendance WHERE trip_id IN (SELECT id FROM trips WHERE bus_id = ?)";
+        String deleteIssuesSql = "DELETE FROM bus_issues WHERE bus_id = ?";
+        String deleteTripsSql = "DELETE FROM trips WHERE bus_id = ?";
+        String deleteBusSql = "DELETE FROM buses WHERE id = ?";
+
+        try (Connection conn = DBContext.getConnection()) {
+            conn.setAutoCommit(false); 
+
+            try {
+                try (PreparedStatement ps = conn.prepareStatement(deleteAttendanceSql)) {
+                    ps.setInt(1, busId);
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(deleteIssuesSql)) {
+                    ps.setInt(1, busId);
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(deleteTripsSql)) {
+                    ps.setInt(1, busId);
+                    ps.executeUpdate();
+                }
+
+                try (PreparedStatement ps = conn.prepareStatement(deleteBusSql)) {
+                    ps.setInt(1, busId);
+                    ps.executeUpdate();
+                }
+
+                conn.commit(); 
+
+            } catch (SQLException e) {
+                conn.rollback(); 
+                e.printStackTrace();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 }

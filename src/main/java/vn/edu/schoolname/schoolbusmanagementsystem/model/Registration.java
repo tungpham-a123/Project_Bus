@@ -12,6 +12,42 @@ public class Registration {
     private String status;
     private Trip todaysTrip;
     private Attendance attendanceStatus;
+    private Trip pickupTrip;
+    private Attendance pickupAttendance;
+    private Trip dropoffTrip;
+    private Attendance dropoffAttendance;
+
+    public Trip getPickupTrip() {
+        return pickupTrip;
+    }
+
+    public void setPickupTrip(Trip pickupTrip) {
+        this.pickupTrip = pickupTrip;
+    }
+
+    public Attendance getPickupAttendance() {
+        return pickupAttendance;
+    }
+
+    public void setPickupAttendance(Attendance pickupAttendance) {
+        this.pickupAttendance = pickupAttendance;
+    }
+
+    public Trip getDropoffTrip() {
+        return dropoffTrip;
+    }
+
+    public void setDropoffTrip(Trip dropoffTrip) {
+        this.dropoffTrip = dropoffTrip;
+    }
+
+    public Attendance getDropoffAttendance() {
+        return dropoffAttendance;
+    }
+
+    public void setDropoffAttendance(Attendance dropoffAttendance) {
+        this.dropoffAttendance = dropoffAttendance;
+    }
 
     public Registration() {
     }
